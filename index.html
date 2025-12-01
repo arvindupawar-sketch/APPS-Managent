@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APPS Education | Management System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media print {
+            @page { size: A4; margin: 0; }
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; background: white; min-height: 100vh; }
+            .no-print { display: none !important; }
+            .a4-page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; background: white; box-sizing: border-box; }
+        }
+        .id-card-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); position: relative; overflow: hidden; }
+        .id-card-bg::before { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .marquee-container { overflow: hidden; white-space: nowrap; }
+        .marquee-content { display: inline-block; animation: marquee 30s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    </style>
+</head>
+<body class="text-slate-800 pb-8">
+
+    <!-- Notifications -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-slate-900 p-4 pb-12 relative z-10">
+        <div class="bg-white rounded-2xl shadow-2xl flex overflow-hidden max-w-4xl w-full fade-in flex-col md:flex-row relative z-20">
+            <div class="hidden md:block w-1/2 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');">
+                <div class="h-full w-full bg-blue-900 bg-opacity-60 flex flex-col justify-center items-center text-white p-8">
+                    <!-- Logo on Desktop Login Panel -->
+                    <img src="logo.png" alt="Logo" class="w-24 h-24 mb-4 object-contain drop-shadow-md" onerror="this.style.display='none'; document.getElementById('desktop-fallback-icon').style.display='block'">
+                    <i id="desktop-fallback-icon" class="fas fa-graduation-cap text-6xl mb-4 hidden"></i>
+                    <h1 class="text-4xl font-bold mb-4">APPS Education</h1>
+                    <p class="text-lg text-center">Empowering minds, shaping futures.</p>
+                </div>
+            </div>
+            <div class="w-full md:w-1/2 p-8 md:p-12">
+                <div class="md:hidden text-center mb-6 flex flex-col items-center">
+                    <!-- Logo on Mobile Login Header -->
+                    <img src="logo.png" alt="Logo" class="w-16 h-16 mb-2 object-contain" onerror="this.style.display='none'; document.getElementById('mobile-fallback-icon').style.display='block'">
+                    <i id="mobile-fallback-icon" class="fas fa-graduation-cap text-4xl text-blue-900 mb-2 hidden"></i>
+                    <h1 class="text-3xl font-bold text-blue-900">APPS Education</h1>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Welcome Back</h2>
+                <p class="text-slate-500 mb-8">Please login to your account</p>
+                
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Email ID</label>
+                        <input type="email" id="username" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" placeholder="abc@xyz.com" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                        <input type="password" id="password" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" placeholder="Enter password" required>
+                        <div class="text-right mt-2">
+                            <button type="button" onclick="forgotPassword()" class="text-sm text-blue-600 hover:text-blue-800 hover:underline focus:outline-none">Forgot Password?</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition shadow-lg transform hover:scale-[1.02]">Login</button>
+                    
+                    <div class="mt-6 text-center space-y-2">
+                         <div>
+                            <button type="button" onclick="exportDatabase()" class="text-xs text-blue-500 hover:text-blue-700 border-b border-blue-300 mr-4 cursor-pointer"><i class="fas fa-download"></i> Backup Data</button>
+                            <label class="text-xs text-blue-500 hover:text-blue-700 border-b border-blue-300 cursor-pointer">
+                                <i class="fas fa-upload"></i> Restore Data
+                                <input type="file" class="hidden" onchange="importDatabase(this)" accept=".json">
+                            </label>
+                        </div>
+                        <div>
+                            <button type="button" onclick="hardReset()" class="text-xs text-red-400 hover:text-red-600 border-b border-red-300 cursor-pointer">Reset App Data (Fix Login)</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Layout -->
+    <div id="dashboard-layout" class="hidden min-h-screen flex">
+        <aside id="sidebar" class="bg-slate-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col transition-all duration-300 fixed md:relative h-full z-40 shadow-xl">
+            <div class="p-6 border-b border-slate-700">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <img src="logo.png" alt="Logo" class="w-8 h-8 object-contain bg-white rounded-full p-0.5" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                        <i class="fas fa-graduation-cap text-xl hidden"></i>
+                        <span class="text-xl font-bold tracking-wider">APPS Edu</span>
+                    </div>
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="teacher-contact-display" class="text-xs text-slate-400 hidden mt-2 p-2 bg-slate-800 rounded">
+                    <i class="fas fa-phone-alt mr-1 text-green-400"></i> <span id="teacher-phone-val"></span>
+                </div>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1 px-3" id="nav-menu">
+                    <!-- Nav items injected via JS based on Role -->
+                </ul>
+            </nav>
+
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-lg" id="user-avatar">A</div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-sm font-semibold truncate" id="user-name-display">User</p>
+                        <p class="text-xs text-slate-400 capitalize" id="user-role-display">Role</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <button onclick="openModal('changePassword')" class="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2 rounded text-xs transition text-slate-300" title="Change Password">
+                        <i class="fas fa-key"></i> Pass
+                    </button>
+                    <button onclick="logout()" class="flex items-center justify-center gap-2 bg-red-900/30 hover:bg-red-900/50 text-red-200 py-2 rounded text-xs transition">
+                        <i class="fas fa-sign-out-alt"></i> Out
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <!-- Mobile Header -->
+            <header class="bg-white shadow-sm flex flex-col z-30 sticky top-0">
+                <!-- Highlighted Notification Bar -->
+                <div class="bg-gradient-to-r from-yellow-100 to-yellow-50 border-b border-yellow-200 text-yellow-800 h-8 flex items-center px-4 overflow-hidden relative">
+                    <div class="text-xs font-bold bg-yellow-200 px-2 py-0.5 rounded mr-2 z-10 shadow-sm whitespace-nowrap">NOTICE</div>
+                    <div class="marquee-container flex-1">
+                        <div class="marquee-content text-sm font-medium" id="marquee-text">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-16 flex items-center justify-between px-4 md:px-8 gap-4">
+                    <div class="flex items-center gap-2 flex-1 md:flex-none">
+                        <button onclick="toggleSidebar()" class="md:hidden text-slate-600 text-xl p-2"><i class="fas fa-bars"></i></button>
+                        <h2 id="page-title" class="text-xl font-bold text-slate-800 hidden md:block">Dashboard</h2>
+                    </div>
+
+                    <!-- Global Search Bar (Admin Only) -->
+                    <div id="global-search-container" class="flex-1 max-w-md hidden w-full">
+                        <div class="relative">
+                            <input type="text" id="global-search-input" onkeyup="performSearch(this.value)" placeholder="Search..." class="w-full bg-gray-100 border-none rounded-full py-2 px-4 pl-10 focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <button class="relative text-slate-500 hover:text-blue-600 p-2 md:hidden" onclick="openModal('changePassword')">
+                            <i class="fas fa-key text-xl"></i>
+                        </button>
+                        <button class="relative text-slate-500 hover:text-blue-600 p-2" onclick="showNotifications()">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notif-badge" class="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center hidden">0</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Content Area -->
+            <div id="content-area" class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+                <!-- Views injected here -->
+            </div>
+        </main>
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modal-container" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <!-- Modal content injected via JS -->
+    </div>
+
+    <!-- Copyright Footer -->
+    <div class="fixed bottom-0 left-0 w-full text-center text-[10px] text-gray-400 bg-[#f3f4f6] py-2 z-50 border-t border-gray-200">
+        © APPS Education, Buldhana. 9960690690
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DATA STORE & CONFIG
+        // ==========================================
+        
+        const DB_KEYS = {
+            USERS: 'apps_users',
+            STUDENTS: 'apps_students',
+            BATCHES: 'apps_batches',
+            ATTENDANCE: 'apps_attendance',
+            MARKS: 'apps_marks',
+            FEES: 'apps_fees',
+            NOTICES: 'apps_notices',
+            CURRENT_USER: 'apps_current_session'
+        };
+        
+        const SUBJECT_LIST = ['English', 'Maths', 'Science', 'Hindi', 'Marathi', 'Social Science'];
+
+        const DAO = {
+            get: (key) => {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : [];
+                } catch (e) {
+                    return [];
+                }
+            },
+            set: (key, data) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (e) {
+                    alert('Storage Error: Browser storage full or restricted. Please clear cache.');
+                }
+            },
+            findUsersByCreds: (u, p) => {
+                const users = DAO.get(DB_KEYS.USERS);
+                return users.filter(user => user.username === u.trim() && user.password === p.trim());
+            },
+            getStudentsByBatch: (bid) => DAO.get(DB_KEYS.STUDENTS).filter(s => s.batchId === bid),
+            getWards: (pid) => DAO.get(DB_KEYS.STUDENTS).filter(s => s.parentId === pid),
+            generateStudentId: () => {
+                let students = DAO.get(DB_KEYS.STUDENTS);
+                let maxId = 0;
+                students.forEach(s => {
+                    if (s.id && s.id.toString().startsWith('25')) {
+                        let numPart = parseInt(s.id.substring(2));
+                        if (!isNaN(numPart) && numPart > maxId) maxId = numPart;
+                    }
+                });
+                return '25' + String(maxId + 1).padStart(5, '0');
+            }
+        };
+
+        let currentUser = null;
+        let currentChart = null;
+        let selectedWardId = null;
+
+        // --- 2. UTILS & HELPERS ---
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const div = document.createElement('div');
+            const bg = type === 'error' ? 'bg-red-500' : 'bg-green-600';
+            div.className = `${bg} text-white px-6 py-3 rounded shadow-lg flex items-center gap-2 fade-in`;
+            div.innerHTML = `<span>${msg}</span>`;
+            container.appendChild(div);
+            setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 500); }, 3000);
+        }
+        function closeModal() { document.getElementById('modal-container').classList.add('hidden'); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); }
+        function updateMarquee() {
+            const notices = DAO.get(DB_KEYS.NOTICES).reverse().slice(0, 5);
+            const marquee = document.getElementById('marquee-text');
+            if (marquee) marquee.innerHTML = notices.length ? notices.map(n => `<span class="mx-4">📢 ${n.title}: ${n.message}</span>`).join('') : "Welcome to APPS Education Management System.";
+        }
+        function updateTeacherContact() {
+            const div = document.getElementById('teacher-contact-display');
+            const span = document.getElementById('teacher-phone-val');
+            if (currentUser && currentUser.role === 'parent' && selectedWardId) {
+                const s = DAO.get(DB_KEYS.STUDENTS).find(x => x.id === selectedWardId);
+                if (s) {
+                    const b = DAO.get(DB_KEYS.BATCHES).find(x => x.id === s.batchId);
+                    if (b && b.teacherId) {
+                        const t = DAO.get(DB_KEYS.USERS).find(x => x.id === b.teacherId);
+                        if (t && t.phone) {
+                            span.innerText = t.phone;
+                            div.classList.remove('hidden');
+                            return;
+                        }
+                    }
+                }
+            }
+            if (div) div.classList.add('hidden');
+        }
+        function switchWard(id) { selectedWardId = id; updateTeacherContact(); renderView('my-child'); }
+        function showNotifications() { renderView('notices'); }
+        function forgotPassword() {
+             const m = document.getElementById('modal-container'); m.classList.remove('hidden');
+             m.innerHTML = `<div class="bg-white rounded-lg p-6 w-full max-w-sm text-center"><h3 class="font-bold text-lg mb-2">Forgot Password?</h3><p class="text-sm text-gray-600 mb-4">Contact Admin: 9834338813</p><button onclick="closeModal()" class="bg-slate-800 text-white px-4 py-2 rounded w-full">Close</button></div>`;
+        }
+        function hardReset() { if(confirm('Wipe all data?')) { localStorage.clear(); location.reload(); } }
+        function performSearch(q) { const c = document.getElementById('content-area'); document.getElementById('page-title').innerText = 'Search Results'; if(!q.trim()){ renderView('dashboard'); return; } q=q.toLowerCase(); const s = DAO.get(DB_KEYS.STUDENTS).filter(x=>x.name.toLowerCase().includes(q)||x.phone.includes(q)); const t = DAO.get(DB_KEYS.USERS).filter(x=>x.role==='teacher'&&(x.name.toLowerCase().includes(q)||x.username.toLowerCase().includes(q))); let h = `<div class="space-y-6 pb-20">`; if(s.length) h+=`<div><h3>Students</h3>${s.map(x=>`<div class="p-4 border mb-2 flex justify-between">${x.name}<button onclick="openModal('viewStudent','${x.id}')"><i class="fas fa-eye"></i></button></div>`).join('')}</div>`; if(t.length) h+=`<div><h3>Teachers</h3>${t.map(x=>`<div class="p-4 border mb-2 flex justify-between">${x.name}<button onclick="openModal('viewTeacher','${x.id}')"><i class="fas fa-eye"></i></button></div>`).join('')}</div>`; if(!s.length && !t.length) h+=`<p class="text-center p-10">No results</p>`; h+=`</div>`; c.innerHTML = h; }
+        function getWardSwitcherHTML() {
+            if (!currentUser || currentUser.role !== 'parent') return '';
+            const wards = DAO.getWards(currentUser.id);
+            if (wards.length < 2) return '';
+            return `<div class="mb-4 flex justify-end"><div class="bg-white border rounded-lg p-1 flex items-center shadow-sm"><span class="text-xs font-bold text-gray-500 px-2 uppercase">Switch Ward:</span><select onchange="switchWard(this.value)" class="bg-transparent text-sm font-bold text-blue-600 outline-none cursor-pointer">${wards.map(w => `<option value="${w.id}" ${w.id === selectedWardId ? 'selected' : ''}>${w.name}</option>`).join('')}</select></div></div>`;
+        }
+
+        // --- 3. INIT ---
+        function initDB() {
+            try {
+                let users = DAO.get(DB_KEYS.USERS);
+                // Clean slate for init
+                if (!users.some(u => u.role === 'admin')) {
+                     users.push({ 
+                        id: 'u1', 
+                        name: 'Super Admin', 
+                        username: 'admin@apps.edu', 
+                        password: 'admin', 
+                        role: 'admin', 
+                        dob: '1980-01-01' 
+                    });
+                     DAO.set(DB_KEYS.USERS, users);
+                }
+                ['BATCHES', 'STUDENTS', 'ATTENDANCE', 'MARKS', 'NOTICES'].forEach(k => {
+                    if (!localStorage.getItem(DB_KEYS[k])) DAO.set(DB_KEYS[k], []);
+                });
+            } catch (error) {
+                console.error("Init Failed", error);
+            }
+        }
+
+        function initApp() {
+            initDB();
+            setTimeout(() => {
+                updateMarquee();
+                try {
+                    const s = sessionStorage.getItem(DB_KEYS.CURRENT_USER);
+                    if (s) { currentUser = JSON.parse(s); showDashboard(); }
+                    else { document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('dashboard-layout').classList.add('hidden'); }
+                } catch { sessionStorage.clear(); document.getElementById('login-screen').classList.remove('hidden'); }
+            }, 100);
+        }
+
+        // --- 4. NAVIGATION & VIEWS ---
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            const users = DAO.findUsersByCreds(u, p);
+            if (users.length === 1) finalizeLogin(users[0]);
+            else if (users.length > 1) showAccountSelection(users);
+            else showToast('Invalid credentials', 'error');
+        }
+
+        function finalizeLogin(user) {
+            currentUser = user; 
+            sessionStorage.setItem(DB_KEYS.CURRENT_USER, JSON.stringify(user)); 
+            closeModal();
+            if(currentUser.role === 'parent') { const w = DAO.getWards(currentUser.id); if(w.length > 0) selectedWardId = w[0].id; }
+            showToast(`Welcome, ${user.name}`, 'success'); 
+            showDashboard();
+        }
+
+        function showDashboard() {
+            document.getElementById('login-screen').classList.add('hidden'); 
+            document.getElementById('dashboard-layout').classList.remove('hidden');
+            const sb = document.getElementById('global-search-container');
+            if(currentUser.role === 'admin') sb.classList.remove('hidden'); else sb.classList.add('hidden');
+            document.getElementById('user-name-display').innerText = currentUser.name;
+            document.getElementById('user-role-display').innerText = currentUser.role;
+            document.getElementById('user-avatar').innerText = currentUser.name.charAt(0);
+            updateTeacherContact();
+            renderNav();
+            if (currentUser.role === 'parent') renderView('my-child'); else renderView('dashboard');
+        }
+
+        function renderNav() {
+            const n = document.getElementById('nav-menu'); n.innerHTML = '';
+            const item = (i,t,f) => `<li><button onclick="${f}" class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition text-left"><i class="${i} w-6 text-center"></i><span class="text-sm font-medium">${t}</span></button></li>`;
+            if(currentUser.role === 'admin') n.innerHTML = item('fas fa-th-large','Dashboard',"renderView('dashboard')") + item('fas fa-bullhorn','Notices',"renderView('notices')") + item('fas fa-user-graduate','Students',"renderView('students')") + item('fas fa-chalkboard','Batches',"renderView('batches')") + item('fas fa-chalkboard-teacher','Teachers',"renderView('teachers')") + item('fas fa-rupee-sign','Fees',"renderView('fees')");
+            else if(currentUser.role === 'teacher') n.innerHTML = item('fas fa-th-large','Dashboard',"renderView('dashboard')") + item('fas fa-bullhorn','Notices',"renderView('notices')") + item('fas fa-calendar-check','Attendance',"renderView('attendance')") + item('fas fa-poll','Marks',"renderView('marks')") + item('fas fa-rupee-sign','Fees',"renderView('fees')");
+            else if(currentUser.role === 'parent') n.innerHTML = item('fas fa-child','My Ward',"renderView('my-child')") + item('fas fa-bullhorn','Notices',"renderView('notices')") + item('fas fa-calendar-alt','Attendance',"renderView('parent-attendance')");
+        }
+
+        function renderView(v) {
+            const c = document.getElementById('content-area'), t = document.getElementById('page-title');
+            if(v==='dashboard') { t.innerText='Dashboard'; c.innerHTML=getDashboardHTML(); }
+            else if(v==='students') { t.innerText='Students'; c.innerHTML=getStudentsHTML(); }
+            else if(v==='batches') { t.innerText='Batches'; c.innerHTML=getBatchesHTML(); }
+            else if(v==='teachers') { t.innerText='Teachers'; c.innerHTML=getTeachersHTML(); }
+            else if(v==='fees') { t.innerText='Fees'; c.innerHTML=getFeesHTML(); }
+            else if(v==='attendance') { t.innerText='Attendance'; c.innerHTML=getAttendanceHTML(); }
+            else if(v==='notices') { t.innerText='Notices'; c.innerHTML=getNoticesHTML(); }
+            else if(v==='marks') { t.innerText='Marks'; c.innerHTML=getMarksHTML(); }
+            else if(v==='my-child') { t.innerText='My Ward'; c.innerHTML=getMyChildHTML(); }
+            else if(v==='parent-attendance') { t.innerText='Attendance Report'; c.innerHTML=getParentAttendanceHTML(); }
+            else if(v==='search-results') { t.innerText='Search Results'; }
+            if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('hidden'); document.getElementById('sidebar-overlay').classList.add('hidden'); }
+        }
+
+        function showAccountSelection(users) {
+            const m = document.getElementById('modal-container'); m.classList.remove('hidden');
+            m.innerHTML = `<div class="bg-white rounded-xl p-6 w-full max-w-sm"><h3 class="text-xl font-bold mb-2">Select Account</h3><div class="space-y-3">${users.map(u => `<button onclick='finalizeLogin(${JSON.stringify(u)})' class="w-full bg-slate-50 border p-4 rounded flex items-center gap-4 text-left"><div class="w-10 h-10 bg-blue-100 text-blue-600 flex items-center justify-center font-bold rounded-full">${u.role.charAt(0).toUpperCase()}</div><div><p class="font-bold capitalize">${u.name}</p><p class="text-xs text-gray-500 uppercase">${u.role}</p></div></button>`).join('')}</div><button onclick="closeModal()" class="mt-4 w-full text-gray-500">Cancel</button></div>`;
+        }
+
+        function logout() { currentUser = null; selectedWardId = null; sessionStorage.removeItem(DB_KEYS.CURRENT_USER); location.reload(); }
+
+        // --- 5. HTML GENERATORS ---
+        function getDashboardHTML() {
+            const s = DAO.get(DB_KEYS.STUDENTS).length, b = DAO.get(DB_KEYS.BATCHES).length, t = DAO.get(DB_KEYS.USERS).filter(u=>u.role==='teacher').length;
+            const pending = DAO.get(DB_KEYS.STUDENTS).reduce((acc, st) => acc + (st.totalFees - (st.paidFees||0)), 0);
+            const card = (l, v, c, i) => `<div class="bg-white rounded-xl shadow-sm p-6 border-l-4 ${c} flex justify-between items-center"><div><p class="text-sm text-gray-500 font-bold">${l}</p><h3 class="text-3xl font-bold text-slate-800">${v}</h3></div><div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-xl text-slate-600"><i class="${i}"></i></div></div>`;
+            return `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">${card('Students', s, 'border-blue-500', 'fas fa-user-graduate')}${card('Batches', b, 'border-green-500', 'fas fa-layer-group')}${card('Teachers', t, 'border-purple-500', 'fas fa-chalkboard-teacher')}${card('Pending Fees', '₹'+pending, 'border-red-500', 'fas fa-wallet')}</div><div class="bg-white p-6 rounded-xl shadow-sm mb-6"><h3 class="font-bold text-lg mb-4">Quick Actions</h3><div class="grid grid-cols-2 gap-4"><button onclick="openModal('addStudent')" class="p-4 bg-blue-50 text-blue-600 rounded border transition hover:bg-blue-100"><i class="fas fa-plus-circle text-2xl block mb-2"></i>Student</button><button onclick="renderView('batches')" class="p-4 bg-purple-50 text-purple-600 rounded border transition hover:bg-purple-100"><i class="fas fa-clock text-2xl block mb-2"></i>Batches</button></div></div>`;
+        }
+        function getStudentsHTML() {
+            const st = DAO.get(DB_KEYS.STUDENTS), ba = DAO.get(DB_KEYS.BATCHES);
+            const rows = st.map(s => {
+                const bName = ba.find(b => b.id === s.batchId)?.name || 'Unassigned';
+                const pending = s.totalFees - (s.paidFees || 0);
+                return `<tr class="border-b hover:bg-gray-50"><td class="p-4 font-medium whitespace-nowrap">${s.name}<div class="text-xs text-gray-400">ID: ${s.id}</div></td><td class="p-4 text-sm text-gray-600 whitespace-nowrap">${bName}</td><td class="p-4 text-sm text-gray-600 whitespace-nowrap">${s.phone}</td><td class="p-4 text-sm whitespace-nowrap ${pending>0?'text-red-600 font-bold':'text-green-600'}">${pending>0?'Due: '+pending:'Paid'}</td><td class="p-4 flex gap-2 whitespace-nowrap"><button onclick="openModal('viewStudent','${s.id}')" class="text-teal-600 p-1"><i class="fas fa-eye"></i></button><button onclick="generateIDCard('${s.id}')" class="text-blue-600 p-1"><i class="fas fa-id-card"></i></button><button onclick="generateReportCard('${s.id}')" class="text-purple-600 p-1"><i class="fas fa-file-alt"></i></button><button onclick="editStudent('${s.id}')" class="text-gray-600 p-1"><i class="fas fa-edit"></i></button><button onclick="deleteStudent('${s.id}')" class="text-red-600 p-1"><i class="fas fa-trash"></i></button></td></tr>`;
+            }).join('');
+            return `<div class="bg-white rounded-xl shadow-sm overflow-hidden pb-20"><div class="p-4 border-b flex justify-between items-center bg-gray-50"><h3 class="font-bold">All Students</h3><button onclick="openModal('addStudent')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"><i class="fas fa-plus mr-1"></i> Add New</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100 text-xs font-bold text-gray-600 uppercase"><tr><th class="p-4">Name/ID</th><th class="p-4">Batch</th><th class="p-4">Phone</th><th class="p-4">Fees</th><th class="p-4">Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="p-4 text-center text-gray-500">No students found.</td></tr>'}</tbody></table></div></div>`;
+        }
+        function getTeachersHTML() {
+            const t = DAO.get(DB_KEYS.USERS).filter(u => u.role === 'teacher');
+            const rows = t.map(u => `<tr class="border-b hover:bg-gray-50"><td class="p-4 whitespace-nowrap font-medium">${u.name}</td><td class="p-4 whitespace-nowrap text-sm">${u.username}</td><td class="p-4 flex gap-2 whitespace-nowrap"><button onclick="openModal('viewTeacher','${u.id}')" class="text-teal-600 p-1"><i class="fas fa-eye"></i></button><button onclick="deleteTeacher('${u.id}')" class="text-red-600 p-1"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+            return `<div class="bg-white rounded-xl shadow-sm overflow-hidden pb-20"><div class="p-4 border-b flex justify-between items-center bg-gray-50"><h3 class="font-bold">Teachers</h3><button onclick="openModal('addTeacher')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Add</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100 text-xs font-bold text-gray-600 uppercase"><tr><th class="p-4">Name</th><th class="p-4">Email</th><th class="p-4">Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="p-4 text-center text-gray-500">No teachers found.</td></tr>'}</tbody></table></div></div>`;
+        }
+        function getBatchesHTML() {
+            const b = DAO.get(DB_KEYS.BATCHES);
+            return `<div class="bg-white rounded-xl shadow-sm p-6 pb-20"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg">Manage Batches</h3><button onclick="openModal('addBatch')" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"><i class="fas fa-plus"></i> Create Batch</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${b.map(x => `<div class="border rounded-lg p-4 hover:shadow-md bg-white relative"><div class="absolute top-2 right-2 text-gray-400 cursor-pointer hover:text-red-500" onclick="deleteBatch('${x.id}')"><i class="fas fa-trash"></i></div><h4 class="font-bold text-lg">${x.name}</h4><p class="text-sm text-gray-500">${x.time}</p></div>`).join('')||'<p class="text-gray-500 col-span-3 text-center">No batches.</p>'}</div></div>`;
+        }
+        function getFeesHTML() {
+            let st = DAO.get(DB_KEYS.STUDENTS); const isAdmin = currentUser.role === 'admin';
+            if (currentUser.role === 'teacher') { const bids = DAO.get(DB_KEYS.BATCHES).filter(b => b.teacherId === currentUser.id).map(b => b.id); st = st.filter(s => bids.includes(s.batchId)); }
+            const rows = st.map(s => { const bal = s.totalFees - (s.paidFees||0); return `<tr class="border-b hover:bg-gray-50"><td class="p-4 font-medium whitespace-nowrap">${s.name}<div class="text-xs text-gray-400">ID: ${s.id}</div></td>${currentUser.role!=='teacher'?`<td class="p-4 whitespace-nowrap">₹${s.totalFees}</td><td class="p-4 whitespace-nowrap text-green-600 font-bold">₹${s.paidFees||0}</td>`:''}<td class="p-4 whitespace-nowrap ${bal>0?'text-red-600 font-bold':'text-green-600'}">₹${bal}</td><td class="p-4 flex gap-2 whitespace-nowrap">${isAdmin?`<button onclick="openModal('updateFee','${s.id}')" class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded">Pay</button>`:''}<button onclick="viewFeeHistory('${s.id}')" class="text-xs bg-gray-100 px-3 py-1 rounded">History</button></td></tr>`; }).join('');
+            return `<div class="bg-white rounded-xl shadow-sm overflow-hidden pb-20"><div class="p-4 border-b bg-gray-50"><h3 class="font-bold">Fee Status</h3></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100 text-xs font-bold text-gray-600 uppercase"><tr><th class="p-4">Student</th>${currentUser.role!=='teacher'?'<th class="p-4">Total</th><th class="p-4">Paid</th>':''}<th class="p-4">Pending</th><th class="p-4">Action</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="p-4 text-center text-gray-500">No records found.</td></tr>'}</tbody></table></div></div>`;
+        }
+        function getAttendanceHTML() {
+            const opts = DAO.get(DB_KEYS.BATCHES).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            return `<div class="bg-white rounded-xl shadow-sm p-6 max-w-3xl mx-auto pb-20"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div><label class="block text-sm font-medium mb-1">Select Batch</label><select id="att-batch" onchange="loadAttendanceSheet()" class="w-full border rounded p-2 bg-gray-50"><option value="">-- Select Batch --</option>${opts}</select></div><div><label class="block text-sm font-medium mb-1">Date</label><input type="date" id="att-date" onchange="loadAttendanceSheet()" class="w-full border rounded p-2 bg-gray-50" value="${new Date().toISOString().split('T')[0]}"></div></div><div id="attendance-list" class="space-y-2"><p class="text-center text-gray-500 py-8">Select batch/date.</p></div><div class="mt-6 text-right hidden" id="att-submit-btn"><button onclick="saveAttendance()" class="bg-green-600 text-white px-6 py-2 rounded-lg shadow">Save</button></div></div>`;
+        }
+        function getNoticesHTML() {
+            const n = DAO.get(DB_KEYS.NOTICES).reverse(); const batches = DAO.get(DB_KEYS.BATCHES); let disp = n;
+            if(currentUser.role === 'parent') { let bid = null; if(selectedWardId) { const s = DAO.get(DB_KEYS.STUDENTS).find(x=>x.id===selectedWardId); bid = s?s.batchId:null; } disp = n.filter(x => x.target === 'all' || (bid && x.target === bid)); }
+            else if(currentUser.role === 'teacher') { disp = n.filter(x => x.sender === currentUser.name || x.target === 'all'); }
+            const cards = disp.map(x => { const del = (currentUser.role === 'admin' || (currentUser.role === 'teacher' && x.sender === currentUser.name)) ? `<button onclick="deleteNotice('${x.id}')" class="text-red-400"><i class="fas fa-trash"></i></button>` : ''; return `<div class="bg-white p-4 rounded shadow-sm border mb-4"><div class="flex justify-between items-start mb-2"><h4 class="font-bold text-slate-800">${x.title}</h4>${del}</div><p class="text-sm text-gray-600 mb-3">${x.message}</p><div class="flex justify-between items-center text-xs text-gray-400"><span>${x.sender}</span><span>${x.date}</span></div></div>`; }).join('');
+            const form = currentUser.role !== 'parent' ? `<div class="bg-white p-4 rounded-xl shadow-sm mb-6"><h3 class="font-bold text-lg mb-4">Send Notice</h3><form onsubmit="saveNotice(event)"><div class="grid grid-cols-2 gap-4 mb-4"><input name="title" placeholder="Title" required class="border p-2 rounded w-full"><select name="target" required class="border p-2 rounded w-full">${currentUser.role === 'admin' ? '<option value="all">All Batches</option>' : ''}${batches.map(b => `<option value="${b.id}">${b.name}</option>`).join('')}</select></div><textarea name="message" placeholder="Message..." required class="border p-2 rounded w-full h-20 mb-4"></textarea><button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">Send</button></form></div>` : '';
+            return `<div class="max-w-4xl mx-auto pb-20">${form}<div>${cards || '<p class="text-center text-gray-400">No notices.</p>'}</div></div>`;
+        }
+        function getMarksHTML() {
+            const tests = DAO.get(DB_KEYS.MARKS); const batches = DAO.get(DB_KEYS.BATCHES);
+            const getAvg = (scores) => { const vals = Object.values(scores || {}); return vals.length ? Math.round(vals.reduce((a, b) => a + parseInt(b), 0) / vals.length) : 0; };
+            const cards = tests.map(t => { const batchName = batches.find(b => b.id === t.batchId)?.name || 'Unknown'; return `<div class="bg-white p-4 rounded-lg border hover:shadow-md relative group"><div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"><button onclick="deleteTest('${t.id}')" class="text-red-500 p-1"><i class="fas fa-trash"></i></button></div><p class="text-xs text-blue-600 font-bold">${t.date}</p><h4 class="font-bold truncate">${t.name}</h4><p class="text-sm text-gray-500">${batchName}</p><div class="mt-4 flex justify-between text-xs gap-2"><span class="bg-gray-100 px-2 py-1 rounded">Avg: ${getAvg(t.scores)}%</span><div class="flex gap-2"><button onclick="openModal('viewTestResult', '${t.id}')" class="text-blue-600 font-medium">View</button><button onclick="openModal('manageMarks', '${t.id}')" class="text-green-600 font-medium">Edit</button></div></div></div>`; }).join('');
+            return `<div class="bg-white rounded-xl shadow-sm p-6 pb-20"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg">Class Performance</h3><button onclick="openModal('addTest')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Add Test</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${cards || '<p class="col-span-3 text-center text-gray-400">No tests added.</p>'}</div></div>`;
+        }
+        function getMyChildHTML() { if(!selectedWardId) return '<p class="text-center p-10">No ward selected</p>'; const s = DAO.get(DB_KEYS.STUDENTS).find(x=>x.id===selectedWardId); return `<div class="max-w-4xl mx-auto space-y-6 pb-20">${getWardSwitcherHTML()}<div class="bg-white rounded-xl shadow-sm p-6 flex flex-col md:flex-row items-center gap-6"><div class="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-4 border-white shadow">${s.photo ? `<img src="${s.photo}" class="w-full h-full object-cover">` : '<i class="fas fa-user text-4xl text-blue-300"></i>'}</div><div class="flex-1 text-center md:text-left"><h2 class="text-2xl font-bold">${s.name}</h2><p class="text-gray-500">ID: ${s.id} | Batch: ${s.batchId}</p><div class="mt-2"><label class="text-blue-500 text-sm cursor-pointer hover:underline">Update Photo <input type="file" class="hidden" onchange="uploadPhoto(this, '${s.id}')"></label></div></div></div><div class="bg-white rounded-xl shadow-sm p-6"><h3 class="font-bold text-lg mb-4">Subject Progress</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(s.subjects||[]).map(sub=>{ const mm = DAO.get(DB_KEYS.MARKS).filter(m=>m.subject===sub && m.scores[s.id]); let obt=0,max=0,det=''; if(mm.length){ mm.forEach(m=>{ let sc=parseInt(m.scores[s.id]), mx=parseInt(m.maxMarks); obt+=sc; max+=mx; det+=`<div class="flex justify-between text-xs border-b pb-1 mt-1"><span>${m.name}</span><span>${sc}/${mx}</span></div>`; }); } let avg = max>0 ? Math.round((obt/max)*100) : 0; return `<div class="border rounded p-3 bg-gray-50"><div class="flex justify-between mb-2 font-bold text-slate-700"><span>${sub}</span><span class="text-xs bg-white border px-2 rounded">${avg}%</span></div><div class="h-2 bg-gray-200 rounded-full mb-2"><div class="h-2 rounded-full ${avg>=75?'bg-green-500':avg>=50?'bg-blue-500':'bg-red-500'}" style="width:${avg}%"></div></div><div class="max-h-24 overflow-y-auto">${det||'<p class="text-xs text-gray-400">No data</p>'}</div></div>`; }).join('') || '<p class="text-gray-500">No subjects opted.</p>'}</div></div><div class="bg-white rounded-xl shadow-sm p-6"><h3 class="font-bold text-lg mb-4">Overall Trend</h3><canvas id="performanceChart" height="200"></canvas></div></div>`; }
+        function getParentAttendanceHTML() { return `<div class="p-6">${getWardSwitcherHTML()}<p class="text-center">Attendance Report</p></div>`; }
+        
+        // --- 6. MODAL & ACTIONS ---
+        function openModal(type, id) {
+            const modal = document.getElementById('modal-container'); modal.classList.remove('hidden'); let html='';
+            if(type==='addStudent') { const bo = DAO.get(DB_KEYS.BATCHES).map(b=>`<option value="${b.id}">${b.name}</option>`).join(''); html=`<div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"><h3 class="font-bold text-xl mb-4">Add Student</h3><form onsubmit="saveStudent(event)"><input name="name" placeholder="Name" required class="border p-2 w-full mb-2 rounded"><input name="phone" placeholder="Phone" required class="border p-2 w-full mb-2 rounded"><div class="grid grid-cols-2 gap-2 mb-2"><input type="date" name="dob" required class="border p-2 w-full rounded"><select name="batchId" class="border p-2 w-full rounded"><option value="">Batch</option>${bo}</select></div><div class="mb-3"><label class="block text-xs text-gray-500 mb-1">Subjects</label><div class="grid grid-cols-2 gap-2 text-sm h-24 overflow-y-auto border p-2 rounded">${SUBJECT_LIST.map(s=>`<label class="flex items-center gap-2"><input type="checkbox" name="subjects" value="${s}"> ${s}</label>`).join('')}</div></div><input type="number" name="totalFees" placeholder="Fees" required class="border p-2 w-full mb-2 rounded"><div class="bg-gray-50 p-3 rounded border mb-4"><h4 class="text-sm font-bold mb-2">Parent Login</h4><input name="parentUsername" placeholder="Email" required class="border p-2 w-full mb-2 rounded"><input name="parentPassword" placeholder="Password" required class="border p-2 w-full rounded"></div><button class="bg-blue-600 text-white w-full py-2 rounded">Save</button></form><button onclick="closeModal()" class="w-full text-gray-500 mt-2">Cancel</button></div>`; }
+            else if(type==='addTeacher') { html=`<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="font-bold text-xl mb-4">Add Teacher</h3><form onsubmit="saveTeacher(event)"><input name="name" placeholder="Name" required class="border p-2 w-full mb-2 rounded"><input name="phone" placeholder="Mobile" required class="border p-2 w-full mb-2 rounded"><label class="text-xs text-gray-500">Date of Birth</label><input type="date" name="dob" required class="border p-2 w-full mb-4 rounded"><div class="mb-3"><label class="block text-xs text-gray-500 mb-1">Subjects</label><div class="grid grid-cols-2 gap-2 text-sm h-24 overflow-y-auto border p-2 rounded">${SUBJECT_LIST.map(s=>`<label class="flex items-center gap-2"><input type="checkbox" name="subjects" value="${s}"> ${s}</label>`).join('')}</div></div><div class="bg-gray-50 p-3 rounded border mb-4"><h4 class="text-sm font-bold mb-2">Login</h4><input name="username" placeholder="Email" required class="border p-2 w-full mb-2 rounded"><input name="password" placeholder="Password" required class="border p-2 w-full rounded"></div><button class="bg-blue-600 text-white w-full py-2 rounded">Save</button></form><button onclick="closeModal()" class="w-full text-gray-500 mt-2">Cancel</button></div>`; }
+            else if(type==='addBatch') { const to = DAO.get(DB_KEYS.USERS).filter(u=>u.role==='teacher').map(t=>`<option value="${t.id}">${t.name}</option>`).join(''); html=`<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="font-bold text-xl mb-4">Create Batch</h3><form onsubmit="saveBatch(event)"><input name="name" placeholder="Name" required class="border p-2 w-full mb-2 rounded"><input name="time" type="time" required class="border p-2 w-full mb-2 rounded"><select name="teacherId" class="border p-2 w-full mb-4 rounded"><option value="">Teacher</option>${to}</select><button class="bg-purple-600 text-white w-full py-2 rounded">Create</button></form><button onclick="closeModal()" class="w-full text-gray-500 mt-2">Cancel</button></div>`; }
+            else if(type==='updateFee') { html=`<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="font-bold text-xl mb-4">Update Fee</h3><form onsubmit="saveFee(event, '${id}')"><input type="date" name="date" required class="border p-2 w-full mb-2 rounded" value="${new Date().toISOString().split('T')[0]}"><input type="number" name="amount" placeholder="Amount" required class="border p-2 w-full mb-4 rounded"><button class="bg-green-600 text-white w-full py-2 rounded">Pay</button></form><button onclick="closeModal()" class="w-full text-gray-500 mt-2">Cancel</button></div>`; }
+            else if(type==='viewStudent' || type==='viewTeacher') { 
+                const isS = type==='viewStudent'; const d = isS ? DAO.get(DB_KEYS.STUDENTS).find(x=>x.id===id) : DAO.get(DB_KEYS.USERS).find(x=>x.id===id);
+                if(d) { const p = isS ? DAO.get(DB_KEYS.USERS).find(u=>u.id===d.parentId) : null; html=`<div class="bg-white rounded-lg p-6 w-full max-w-md text-center"><h2 class="text-xl font-bold">${d.name}</h2><p class="text-gray-600">${d.phone||''}</p><div class="text-left mt-4 grid grid-cols-2 gap-2 text-sm bg-gray-50 p-2 rounded"><p><strong>DOB:</strong> ${d.dob||'-'}</p>${isS?`<p><strong>Batch:</strong> ${DAO.get(DB_KEYS.BATCHES).find(b=>b.id===d.batchId)?.name||'-'}</p>`:''}</div>${p ? `<div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-left text-xs"><h4 class="font-bold text-yellow-700 mb-1 border-b border-yellow-200 pb-1">Parent Login (Credentials)</h4><p class="mt-1"><strong>Email:</strong> <span class="select-all font-mono">${p.username}</span></p><p><strong>Pass:</strong> <span class="select-all font-mono">${p.password}</span></p></div>` : ''}${!isS ? `<div class="mt-4 p-3 bg-purple-50 border border-purple-200 rounded text-left text-xs"><h4 class="font-bold text-purple-700 mb-1 border-b border-purple-200 pb-1">Teacher Login</h4><p class="mt-1"><strong>Email:</strong> <span class="select-all font-mono">${d.username}</span></p><p><strong>Pass:</strong> <span class="select-all font-mono">${d.password}</span></p></div>` : ''}<button onclick="closeModal()" class="mt-4 w-full bg-gray-200 py-2 rounded">Close</button></div>`; }
+            } else if(type==='changePassword') { html=`<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="font-bold text-xl mb-4">Change Password</h3><form onsubmit="updatePassword(event)"><input type="password" name="currentPass" placeholder="Current" required class="border p-2 w-full mb-2 rounded"><input type="password" name="newPass" placeholder="New" required class="border p-2 w-full mb-2 rounded"><input type="password" name="confirmPass" placeholder="Confirm" required class="border p-2 w-full mb-4 rounded"><button class="bg-blue-600 text-white w-full py-2 rounded">Update</button></form><button onclick="closeModal()" class="w-full text-gray-500 mt-2">Cancel</button></div>`; }
+            else if (type === 'feeHistory') {
+                const s = DAO.get(DB_KEYS.STUDENTS).find(x=>x.id===id);
+                const rows = (s?.feeHistory || []).map(h => `<tr><td class="p-2 border-b">${h.date}</td><td class="p-2 border-b text-right">₹${h.amount}</td></tr>`).join('');
+                html = `<div class="bg-white rounded-lg p-6 w-full max-w-sm"><h3 class="text-xl font-bold mb-4">Payment History</h3><table class="w-full text-sm"><thead><tr><th class="text-left">Date</th><th class="text-right">Amount</th></tr></thead><tbody>${rows || '<tr><td colspan="2" class="text-center py-2">No history</td></tr>'}</tbody></table><button onclick="closeModal()" class="mt-4 w-full bg-gray-200 py-2 rounded">Close</button></div>`;
+            } else if (type === 'editStudent') {
+                 const s = DAO.get(DB_KEYS.STUDENTS).find(x=>x.id===id);
+                 if(s) {
+                     const batches = DAO.get(DB_KEYS.BATCHES).map(b => `<option value="${b.id}" ${b.id===s.batchId?'selected':''}>${b.name}</option>`).join('');
+                     const subs = SUBJECT_LIST.map(sub => `<label class="flex items-center gap-2"><input type="checkbox" name="subjects" value="${sub}" ${s.subjects?.includes(sub)?'checked':''}> ${sub}</label>`).join('');
+                     html = `<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="text-xl font-bold mb-4">Edit Student</h3><form onsubmit="updateStudent(event, '${id}')"><input name="name" value="${s.name}" class="border p-2 w-full mb-3 rounded"><input name="phone" value="${s.phone}" class="border p-2 w-full mb-3 rounded"><input type="date" name="dob" value="${s.dob}" class="border p-2 w-full mb-3 rounded"><select name="batchId" class="border p-2 w-full mb-3 rounded">${batches}</select><div class="mb-3 text-sm h-24 overflow-y-auto border p-2 rounded">${subs}</div><input type="number" name="totalFees" value="${s.totalFees}" class="border p-2 w-full mb-4 rounded"><button type="submit" class="bg-blue-600 text-white w-full py-2 rounded">Update</button></form><button onclick="closeModal()" class="w-full text-gray-500 mt-2 text-sm">Cancel</button></div>`;
+                 }
+            } else if (type === 'addTest') {
+                 const batches = DAO.get(DB_KEYS.BATCHES).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+                 const subjects = SUBJECT_LIST.map(s => `<option value="${s}">${s}</option>`).join('');
+                 html = `<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="text-xl font-bold mb-4">Add Test</h3><form onsubmit="saveTest(event)"><select name="batchId" required class="border p-2 w-full mb-2 rounded"><option value="">Select Batch</option>${batches}</select><select name="subject" required class="border p-2 w-full mb-2 rounded"><option value="">Select Subject</option>${subjects}</select><input name="name" placeholder="Test Title (e.g. Unit Test)" required class="border p-2 w-full mb-2 rounded"><input type="number" name="maxMarks" value="100" required class="border p-2 w-full mb-2 rounded"><input type="date" name="date" required class="border p-2 w-full mb-4 rounded"><button type="submit" class="bg-blue-600 text-white w-full py-2 rounded">Create</button></form><button onclick="closeModal()" class="w-full text-gray-500 mt-2 text-sm">Cancel</button></div>`;
+            } else if (type === 'manageMarks') {
+                const test = DAO.get(DB_KEYS.MARKS).find(t=>t.id===id);
+                if(test) {
+                    const students = DAO.getStudentsByBatch(test.batchId);
+                    // Filter students who have this subject
+                    const validStudents = students.filter(s => !test.subject || !s.subjects || s.subjects.includes(test.subject));
+                    const rows = validStudents.length ? validStudents.map(s => `<tr><td class="p-2">${s.name}</td><td><input type="number" class="mark-input border w-16 text-center rounded" data-student-id="${s.id}" value="${(test.scores||{})[s.id]||''}"></td></tr>`).join('') : '<tr><td colspan="2" class="text-center p-4 text-gray-500">No students opted for this subject.</td></tr>';
+                    html = `<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="font-bold mb-2">${test.name} (${test.subject})</h3><div class="max-h-64 overflow-y-auto mb-4"><table class="w-full">${rows}</table></div><div class="flex justify-end gap-2"><button onclick="closeModal()" class="text-gray-500 px-4">Cancel</button><button onclick="saveMarks('${id}')" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button></div></div>`;
+                }
+            } else if (type === 'viewTestResult') {
+                 const test = DAO.get(DB_KEYS.MARKS).find(t=>t.id===id);
+                 if(test) {
+                     const students = DAO.getStudentsByBatch(test.batchId);
+                     const rows = students.map(s => `<tr><td class="p-2 border-b">${s.name}</td><td class="p-2 border-b text-right font-bold">${(test.scores||{})[s.id] || '-'}</td></tr>`).join('');
+                     html = `<div class="bg-white rounded-lg p-6 w-full max-w-md"><h3 class="font-bold mb-4">${test.name} Result</h3><div class="max-h-64 overflow-y-auto"><table class="w-full"><thead><tr><th class="text-left">Student</th><th class="text-right">Score</th></tr></thead><tbody>${rows}</tbody></table></div><button onclick="closeModal()" class="mt-4 w-full bg-gray-200 py-2 rounded">Close</button></div>`;
+                 }
+            }
+            modal.innerHTML = html;
+        }
+        
+        // Handlers
+        function saveStudent(e) { e.preventDefault(); const f=e.target; const s = DAO.get(DB_KEYS.STUDENTS), u = DAO.get(DB_KEYS.USERS); const pEmail = f.parentUsername.value; let pUser = u.find(x=>x.username===pEmail && x.role==='parent'), pId = pUser ? pUser.id : 'u'+Date.now(); 
+        const subs = Array.from(f.querySelectorAll('input[name="subjects"]:checked')).map(cb=>cb.value);
+        if(!pUser) { u.push({id:pId, name:f.name.value+' (Parent)', username:pEmail, password:f.parentPassword.value, role:'parent', dob:''}); DAO.set(DB_KEYS.USERS, u); } const nId = DAO.generateStudentId(); s.push({id:nId, name:f.name.value, phone:f.phone.value, dob:f.dob.value, batchId:f.batchId.value, totalFees:parseInt(f.totalFees.value), paidFees:0, photo:'', parentId:pId, subjects: subs}); DAO.set(DB_KEYS.STUDENTS, s); closeModal(); showToast('Student Added. ID: ' + nId, 'success'); renderView('students'); }
+        function saveTeacher(e) { e.preventDefault(); const f=e.target; const u=DAO.get(DB_KEYS.USERS); 
+        const subs = Array.from(f.querySelectorAll('input[name="subjects"]:checked')).map(cb=>cb.value);
+        u.push({id:'u'+Date.now(), name:f.name.value, phone:f.phone.value, dob:f.dob.value, username:f.username.value, password:f.password.value, role:'teacher', subjects: subs}); DAO.set(DB_KEYS.USERS, u); closeModal(); showToast('Saved', 'success'); renderView('teachers'); }
+        function saveBatch(e) { e.preventDefault(); const f=e.target; const b=DAO.get(DB_KEYS.BATCHES); b.push({id:'b'+Date.now(), name:f.name.value, time:f.time.value, teacherId:f.teacherId.value}); DAO.set(DB_KEYS.BATCHES, b); closeModal(); showToast('Saved', 'success'); renderView('batches'); }
+        function saveFee(e, id) { e.preventDefault(); const amt=parseInt(e.target.amount.value); let db=DAO.get(DB_KEYS.STUDENTS), s=db.find(x=>x.id===id); if(s && amt>0) { s.paidFees = (parseInt(s.paidFees)||0)+amt; if(!s.feeHistory) s.feeHistory=[]; s.feeHistory.push({date: e.target.date.value, amount: amt}); DAO.set(DB_KEYS.STUDENTS, db); closeModal(); showToast('Recorded', 'success'); renderView('fees'); } }
+        function updateStudent(e, id) { e.preventDefault(); const f=e.target; let db=DAO.get(DB_KEYS.STUDENTS), idx=db.findIndex(x=>x.id===id); 
+        const subs = Array.from(f.querySelectorAll('input[name="subjects"]:checked')).map(cb=>cb.value);
+        if(idx!==-1) { db[idx] = {...db[idx], name:f.name.value, phone:f.phone.value, dob:f.dob.value, batchId:f.batchId.value, totalFees: parseInt(f.totalFees.value), subjects: subs}; DAO.set(DB_KEYS.STUDENTS, db); closeModal(); showToast('Updated', 'success'); renderView('students'); } }
+        function updatePassword(e) { e.preventDefault(); const f=e.target; if(f.newPass.value!==f.confirmPass.value) return showToast('Mismatch', 'error'); let u=DAO.get(DB_KEYS.USERS); u.find(x=>x.id===currentUser.id).password=f.newPass.value; DAO.set(DB_KEYS.USERS, u); closeModal(); showToast('Updated', 'success'); }
+        function saveTest(e) { e.preventDefault(); const f = e.target; const m = DAO.get(DB_KEYS.MARKS); m.push({ id: 't'+Date.now(), name: f.name.value, subject: f.subject.value, batchId: f.batchId.value, maxMarks: parseInt(f.maxMarks.value), date: f.date.value, scores: {} }); DAO.set(DB_KEYS.MARKS, m); closeModal(); showToast('Added', 'success'); renderView('marks'); }
+        function saveMarks(tid) { const inputs = document.querySelectorAll('.mark-input'); let db = DAO.get(DB_KEYS.MARKS); const idx = db.findIndex(x=>x.id===tid); if(idx!==-1) { const scores = {...db[idx].scores}; inputs.forEach(i => { if (i.value) newScores[i.dataset.studentId] = i.value; }); db[idx].scores = scores; DAO.set(DB_KEYS.MARKS, db); closeModal(); showToast('Saved', 'success'); renderView('marks'); } }
+        function saveNotice(e) { e.preventDefault(); const f = e.target; const n = DAO.get(DB_KEYS.NOTICES); n.push({ id: 'n'+Date.now(), title: f.title.value, message: f.message.value, target: f.target.value, sender: currentUser.name, date: new Date().toISOString().split('T')[0] }); DAO.set(DB_KEYS.NOTICES, n); showToast('Sent', 'success'); updateMarquee(); renderView('notices'); }
+        function saveAttendance() { const bid=document.getElementById('att-batch').value, date=document.getElementById('att-date').value; if(!bid||!date) return showToast('Select all', 'error'); const rec={}; document.querySelectorAll('.att-checkbox').forEach(cb=>rec[cb.value]=cb.checked?'Present':'Absent'); let db=DAO.get(DB_KEYS.ATTENDANCE), idx=db.findIndex(r=>r.date===date && r.batchId===bid); if(idx!==-1) db[idx].records=rec; else db.push({date, batchId:bid, records:rec}); DAO.set(DB_KEYS.ATTENDANCE, db); showToast('Saved', 'success'); }
+        
+        function deleteStudent(id) { if(confirm('Delete?')) { let s=DAO.get(DB_KEYS.STUDENTS).filter(x=>x.id!==id); DAO.set(DB_KEYS.STUDENTS, s); renderView('students'); } }
+        function deleteTeacher(id) { if(confirm('Delete?')) { let u=DAO.get(DB_KEYS.USERS).filter(x=>x.id!==id); DAO.set(DB_KEYS.USERS, u); renderView('teachers'); } }
+        function deleteBatch(id) { if(confirm('Delete?')) { let b=DAO.get(DB_KEYS.BATCHES).filter(x=>x.id!==id); DAO.set(DB_KEYS.BATCHES, b); renderView('batches'); } }
+        function deleteTest(id) { if(confirm('Delete?')) { let m=DAO.get(DB_KEYS.MARKS).filter(x=>x.id!==id); DAO.set(DB_KEYS.MARKS, m); renderView('marks'); } }
+        function deleteNotice(id) { if(confirm('Delete?')) { let n=DAO.get(DB_KEYS.NOTICES).filter(x=>x.id!==id); DAO.set(DB_KEYS.NOTICES, n); updateMarquee(); renderView('notices'); } }
+
+        function loadAttendanceSheet() {
+            const bid=document.getElementById('att-batch').value, date=document.getElementById('att-date').value; if(!bid||!date) return;
+            const s=DAO.getStudentsByBatch(bid), c=document.getElementById('attendance-list'), btn=document.getElementById('att-submit-btn');
+            const exist = DAO.get(DB_KEYS.ATTENDANCE).find(r=>r.date===date && r.batchId===bid)?.records || {};
+            if(!s.length) { c.innerHTML='<p class="text-center text-red-500">No students.</p>'; btn.classList.add('hidden'); return; }
+            c.innerHTML = '<div class="grid grid-cols-3 font-bold text-sm bg-gray-100 p-2 rounded mb-2"><span>Name</span><span>Status</span><span>Action</span></div>' + s.map(x => { const isP = exist[x.id]==='Present'||exist[x.id]===undefined; return `<div class="grid grid-cols-3 items-center p-2 border-b"><span class="font-medium">${x.name}</span><span id="status-${x.id}" class="${isP?'text-green-600':'text-red-600'} font-bold text-sm">${isP?'Present':'Absent'}</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" value="${x.id}" class="sr-only peer att-checkbox" ${isP?'checked':''} onchange="toggleAttStatus('${x.id}', this)"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div></label></div>`; }).join('');
+            btn.classList.remove('hidden');
+        }
+        function toggleAttStatus(id, cb) { const el=document.getElementById(`status-${id}`); if(cb.checked) { el.innerHTML='Present'; el.className='text-green-600 font-bold text-sm'; } else { el.innerHTML='Absent'; el.className='text-red-600 font-bold text-sm'; } }
+        function editStudent(id) { openModal('editStudent', id); }
+        function viewFeeHistory(id) { openModal('feeHistory', id); }
+        function uploadPhoto(input, id) { if(input.files[0]) { const r = new FileReader(); r.onload = e => { let db = DAO.get(DB_KEYS.STUDENTS); let s = db.find(x=>x.id===id); s.photo = e.target.result; DAO.set(DB_KEYS.STUDENTS, db); renderView('my-child'); }; r.readAsDataURL(input.files[0]); } }
+        function hardReset() { if(confirm('Reset?')) { localStorage.clear(); location.reload(); } }
+        function exportDatabase() { const d = { users: DAO.get(DB_KEYS.USERS), students: DAO.get(DB_KEYS.STUDENTS), batches: DAO.get(DB_KEYS.BATCHES), marks: DAO.get(DB_KEYS.MARKS), attendance: DAO.get(DB_KEYS.ATTENDANCE), notices: DAO.get(DB_KEYS.NOTICES) }; const b = new Blob([JSON.stringify(d)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click(); }
+        function importDatabase(input) { const f = input.files[0]; if(!f) return; const r = new FileReader(); r.onload = e => { try { const d = JSON.parse(e.target.result); if(d.users) { Object.keys(d).forEach(k => localStorage.setItem('apps_'+k, JSON.stringify(d[k]))); alert('Restored!'); location.reload(); } } catch { alert('Error'); } }; r.readAsText(f); }
+        
+        function generateIDCard(id) { 
+            const s = DAO.get(DB_KEYS.STUDENTS).find(x => x.id === id); 
+            const b = DAO.get(DB_KEYS.BATCHES).find(x => x.id === s.batchId); 
+            if (!s) return; 
+            const modal = document.getElementById('modal-container'); 
+            modal.classList.remove('hidden'); 
+            modal.innerHTML = `
+                <div class="bg-white p-4 rounded-xl max-w-sm w-full">
+                    <div id="printable-area" class="id-card-bg text-white rounded-xl shadow-2xl p-6 text-center border border-slate-700">
+                        <div class="w-full">
+                            <h2 class="text-xl font-bold uppercase mb-1">APPS Education</h2>
+                            <p class="text-xs text-blue-200">Excellence in Coaching</p>
+                        </div>
+                        <div class="relative w-32 h-32 rounded-full border-4 border-white/20 bg-white/10 overflow-hidden flex items-center justify-center mx-auto my-4">
+                            ${s.photo ? `<img src="${s.photo}" class="w-full h-full object-cover">` : '<i class="fas fa-user text-5xl text-white/50"></i>'}
+                        </div>
+                        <h1 class="text-2xl font-bold mb-1">${s.name}</h1>
+                        <div class="bg-white/10 rounded-lg p-3 text-sm text-left space-y-2 mt-4">
+                            <div class="flex justify-between border-b border-white/10 pb-1"><span>ID No:</span> <span class="font-mono">${s.id}</span></div>
+                            <div class="flex justify-between border-b border-white/10 pb-1"><span>Batch:</span> <span>${b ? b.name : 'N/A'}</span></div>
+                            <div class="flex justify-between border-b border-white/10 pb-1"><span>DOB:</span> <span>${s.dob || 'N/A'}</span></div>
+                            <div class="flex justify-between"><span>Phone:</span> <span>${s.phone}</span></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-3 no-print">
+                        <button onclick="window.print()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium shadow-sm transition"><i class="fas fa-print mr-2"></i>Print</button>
+                        <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 font-medium shadow-sm transition">Close</button>
+                    </div>
+                </div>`; 
+        }
+
+        function generateReportCard(id) { 
+            const s = DAO.get(DB_KEYS.STUDENTS).find(x => x.id === id); 
+            const b = DAO.get(DB_KEYS.BATCHES).find(x => x.id === s.batchId);
+            // Get student's opted subjects
+            const optedSubjects = s.subjects || [];
+            // Get marks for these subjects only
+            const marks = DAO.get(DB_KEYS.MARKS).filter(m => m.batchId === s.batchId && optedSubjects.includes(m.subject) && m.scores[s.id]);
+            
+            const rows = marks.length ? marks.map(m => `
+                <tr>
+                    <td class="border p-2">${m.subject}</td>
+                    <td class="border p-2">${m.name}</td>
+                    <td class="border p-2 text-center">${m.maxMarks}</td>
+                    <td class="border p-2 text-center font-bold">${m.scores[s.id]}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="4" class="p-4 text-center text-gray-400">No marks recorded for opted subjects.</td></tr>';
+
+            const modal = document.getElementById('modal-container'); modal.classList.remove('hidden'); 
+            modal.innerHTML = `
+                <div class="bg-white w-full max-w-xl p-8 h-auto overflow-y-auto">
+                    <div id="printable-area" class="text-slate-900">
+                        <div class="border-b-4 border-blue-900 pb-4 mb-6 text-center relative">
+                            <img src="logo.png" class="w-16 h-16 absolute left-0 top-0 object-contain">
+                            <h1 class="text-2xl font-bold text-blue-900 uppercase">APPS Education</h1>
+                            <p class="text-sm text-gray-600">Jijamata Nagar, opp. Prabodhan High School Buldhana</p>
+                        </div>
+                        <div class="flex justify-between mb-6 border p-4 rounded">
+                            <div><p><strong>Name:</strong> ${s.name}</p><p><strong>ID:</strong> ${s.id}</p></div>
+                            <div><p><strong>Batch:</strong> ${b?b.name:'-'}</p></div>
+                        </div>
+                        <table class="w-full border-collapse border mb-8">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border p-2 text-left">Subject</th>
+                                    <th class="border p-2 text-left">Test Name</th>
+                                    <th class="border p-2 text-center">Max</th>
+                                    <th class="border p-2 text-center">Obtained</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                        <div class="flex justify-between pt-8 mt-8 border-t">
+                            <div class="text-center"><p>________________</p><p class="text-xs">Teacher</p></div>
+                            <div class="text-center"><p>________________</p><p class="text-xs">Parent</p></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-3 no-print">
+                        <button onclick="window.print()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium shadow-sm transition"><i class="fas fa-print mr-2"></i>Print</button>
+                        <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 font-medium shadow-sm transition">Close</button>
+                    </div>
+                </div>`; 
+        }
+
+        // Chart Observer
+        const observer = new MutationObserver(function(mutations) {
+            const chartCanvas = document.getElementById('performanceChart');
+            if (chartCanvas && !currentChart) {
+                 if(window.myBarChart) window.myBarChart.destroy();
+                 let labels = ['Test 1', 'Test 2', 'Test 3'], dataPoints = [0, 0, 0];
+                 if (currentUser && currentUser.role === 'parent' && selectedWardId) {
+                     const allTests = DAO.get(DB_KEYS.MARKS);
+                     const myResults = allTests.filter(t => t.scores && t.scores[selectedWardId]).map(t => ({ name: t.name, percentage: (parseInt(t.scores[selectedWardId]) / t.maxMarks * 100) }));
+                     if (myResults.length > 0) { labels = myResults.map(r => r.name); dataPoints = myResults.map(r => r.percentage); }
+                 }
+                 const ctx = chartCanvas.getContext('2d');
+                 window.myBarChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Performance (%)', data: dataPoints, borderColor: 'blue', fill: false }] } });
+                currentChart = true; 
+            } else if (!chartCanvas) currentChart = false;
+        });
+        observer.observe(document.getElementById('content-area'), { childList: true, subtree: true });
+
+        initApp();
+    </script>
+</body>
+</html>
